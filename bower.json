@@ -1,0 +1,20 @@
+{
+    "name": "better-prettydate",
+    "version": "0.9.5",
+    "main": [
+        "better-prettydate.js",
+        "i18n/better-prettydate.en.js",
+        "i18n/better-prettydate.ru.js"
+    ],
+    "ignore": [
+        ".*",
+        "src",
+        "test"
+    ],
+    "keywords": [
+        "better-dom"
+    ],
+    "dependencies": {
+        "better-dom": "~1.1.0"
+    }
+}
