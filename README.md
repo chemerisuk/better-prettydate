@@ -1,6 +1,6 @@
 better-prettydate [![Build Status](https://api.travis-ci.org/chemerisuk/better-prettydate.png?branch=master)](http://travis-ci.org/chemerisuk/better-prettydate)
 ======================
-> Enhance time element to update in real time
+> Enhances time element to update in realtime
 
 Installing
 ----------

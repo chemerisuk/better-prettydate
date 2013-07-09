@@ -4,7 +4,7 @@ DOM.importStrings({
     "prettydate-minutes": "{prettydate} minutes ago",
     "prettydate-hour": "an hour ago",
     "prettydate-hours": "{prettydate} hours ago",
-    "prettydate-yesterday": "Yesterday",
+    "prettydate-yesterday": "yesterday",
     "prettydate-days": "{prettydate} days ago",
     "prettydate-week": "a week ago",
     "prettydate-weeks": "{prettydate} weeks ago",

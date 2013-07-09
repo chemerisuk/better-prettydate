@@ -1,15 +1,15 @@
 /**
  * @file <%= pkg.name %>.js
- * @version <%= pkg.version %> <%= grunt.template.today('isoDateTime') %>
+ * @version <%= pkg.version %> <%= grunt.template.today("isoDateTime") %>
  * @overview <%= pkg.description %>
- * @copyright <%= pkg.author %> <%= grunt.template.today('yyyy') %>
+ * @copyright <%= pkg.author %> <%= grunt.template.today("yyyy") %>
  * @license <%= pkg.license %>
  * @see <%= pkg.repository.url %>
  */
-(function(DOM) {
+(function(DOM, undefined) {
     "use strict";
 
-    // Based on jquery-prettydate:
+    // Inspired by jquery-prettydate:
     // http://bassistance.de/jquery-plugins/jquery-plugin-prettydate/
 
     var I18N_NOW = "prettydate-now",
@@ -24,65 +24,61 @@
         I18N_MONTH = "prettydate-month",
         I18N_MONTHS = "prettydate-months",
         I18N_YEAR = "prettydate-year",
-        I18N_YEARS = "prettydate-years",
-        // regexps
-        rES5ts = /^(\d{4}|[+\-]\d{6})(?:-(\d{2})(?:-(\d{2}))?)?(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{3}))?)?(?:(Z)|([+\-])(\d{2})(?::(\d{2}))?)?)?$/,
-        // Indexes in a rES5ts match list that are required for Date.UTC,
-        // Use in a loop to replace undefined with 0 (otherwise Date.UTC would give NaN)
-        dateUrcReqIndx = [1, 4, 5, 6, 7, 10, 11],
-        parseDate = function (timestamp) {
-            var i, k, minutesOffset,
-                m = rES5ts.exec(timestamp);
-            if (!m) {
-                return NaN;
-            }
-            for (i = 0; (k = dateUrcReqIndx[i]); i += 1) {
-                m[k] = +m[k] || 0;
-            }
-            // Undefined days and months are allowed
-            m[2] = +m[2] || 1;
-            m[3] = +m[3] || 1;
-
-            if (m[8] !== "Z" && m[9] !== undefined) {
-                minutesOffset = m[10] * 60 + m[11];
-
-                if (m[9] === "+") {
-                    minutesOffset = 0 - minutesOffset;
-                }
-            } else {
-                minutesOffset = 0;
-            }
-
-            return Date.UTC(
-                // Year
-                m[1],
-                // Month
-                m[2] - 1,
-                // Day
-                m[3],
-                // Hour
-                m[4],
-                // Minutes
-                // Date.UTC allows values higher than 59 here,
-                // it increments hours, days etc. if needed.
-                m[5] + minutesOffset,
-                // Seconds
-                m[6],
-                // Milliseconds
-                m[7]
-            );
-        };
+        I18N_YEARS = "prettydate-years";
 
     DOM.extend("time[datetime]", {
         constructor: function() {
-            this
-                .bind("refreshDate", parseDate(this.get("datetime")))
-                .set("").refreshDate();
-
-            setInterval(this.refreshDate, 10000);
+            this.set("").bind("_refreshDate")._refreshDate();
         },
-        refreshDate: function(targetTime) {
-            var diff = (new Date() - targetTime) / 1000,
+        getDate: (function() {
+            // https://github.com/csnover/js-iso8601/blob/master/iso8601.js
+            var rES5ts = /^(\d{4}|[+\-]\d{6})(?:-(\d{2})(?:-(\d{2}))?)?(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{3}))?)?(?:(Z)|([+\-])(\d{2})(?::(\d{2}))?)?)?$/,
+                // Indexes in a rES5ts match list that are required for Date.UTC,
+                // Use in a loop to replace undefined with 0 (otherwise Date.UTC would give NaN)
+                dateUrcReqIndx = [1, 4, 5, 6, 7, 10, 11];
+
+            return function() {
+                var i, k, minutesOffset = 0,
+                    m = rES5ts.exec(this.get("datetime"));
+
+                if (!m) throw "Invalid ISO String";
+                
+                for (i = 0; (k = dateUrcReqIndx[i]); i += 1) {
+                    m[k] = +m[k] || 0;
+                }
+                // Undefined days and months are allowed
+                m[2] = +m[2] || 1;
+                m[3] = +m[3] || 1;
+
+                if (m[8] !== "Z" && m[9] !== undefined) {
+                    minutesOffset = m[10] * 60 + m[11];
+
+                    if (m[9] === "+") minutesOffset = 0 - minutesOffset;
+                }
+
+                return Date.UTC(m[1], m[2] - 1, m[3], m[4], m[5] + minutesOffset, m[6], m[7]);
+            };
+        }()),
+        setDate: (function() {
+            var pad = function(value) { return ("00" + value).slice(-2); };
+
+            return function(value) {
+                var result = value.getUTCFullYear() +
+                    "-" + pad( value.getUTCMonth() + 1 ) +
+                    "-" + pad( value.getUTCDate() ) +
+                    "T" + pad( value.getUTCHours() ) +
+                    ":" + pad( value.getUTCMinutes() ) +
+                    ":" + pad( value.getUTCSeconds() ) +
+                    "." + String( (value.getUTCMilliseconds() / 1000).toFixed(3) ).slice(2, 5) +
+                    "Z";
+
+                this.set("datetime", result)._refreshDate();
+
+                return this;
+            };
+        }()),
+        _refreshDate: function() {
+            var diff = (new Date() - this.getDate()) / 1000,
                 dayDiff = Math.floor(diff / 86400),
                 value = 1,
                 i18nKey;
@@ -103,11 +99,9 @@
             else if (dayDiff <= 380) { i18nKey = I18N_YEAR; }
             else if (dayDiff > 380) { i18nKey = I18N_YEARS; value = Math.ceil(dayDiff / 365); }
 
-            this
-                .set("data-i18n", i18nKey)
-                .set("data-prettydate", value);
-
-            return this;
+            this.set({ "data-i18n": i18nKey, "data-prettydate": value });
+            // schedule next update
+            setTimeout(this._refreshDate, (dayDiff > 0 ? 86400 : (diff < 3600 ? 60 : 3600)) * 1000);
         }
     });
 }(window.DOM));
