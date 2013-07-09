@@ -28,6 +28,7 @@
 
     DOM.extend("time[datetime]", {
         constructor: function() {
+            // use bind to store context inside of _refreshDate
             this.set("").bind("_refreshDate")._refreshDate();
         },
         getDate: (function() {
