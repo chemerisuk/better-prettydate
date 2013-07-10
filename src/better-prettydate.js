@@ -29,7 +29,7 @@
     DOM.extend("time[datetime]", {
         constructor: function() {
             // use bind to store context inside of _refreshDate
-            this.set("").bind("_refreshDate")._refreshDate();
+            this.bind("_refreshDate")._refreshDate();
         },
         getDate: (function() {
             // https://github.com/csnover/js-iso8601/blob/master/iso8601.js
@@ -99,8 +99,8 @@
             else if (dayDiff < 363) { i18nKey = I18N_MONTHS; value = Math.ceil(dayDiff / 31); }
             else if (dayDiff <= 380) { i18nKey = I18N_YEAR; }
             else if (dayDiff > 380) { i18nKey = I18N_YEARS; value = Math.ceil(dayDiff / 365); }
-
-            this.set({ "data-i18n": i18nKey, "data-prettydate": value });
+            // protect from internal inserted content + trigger reflow in IE8
+            this.set({ "data-i18n": i18nKey, "data-prettydate": value }).set("");
             // schedule next update
             setTimeout(this._refreshDate, (dayDiff > 0 ? 86400 : (diff < 3600 ? 60 : 3600)) * 1000);
         }

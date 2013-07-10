@@ -4,31 +4,25 @@ describe("better-prettydate", function() {
     var time;
 
     beforeEach(function() {
-        time = DOM.mock("time[datetime]");
+        time = DOM.mock("time[datetime=2012]");
     });
 
     it("should allow to read Date from the attribute value", function() {
-        var spy = spyOn(time, "get").andReturn("2013-07-09T13:12:52.795Z");
-        expect(+time.getDate()).toBe(1373375572795);
-        expect(spy).toHaveBeenCalled();
-
-        spy.andReturn("2013-07-09T13:12:52.795+03");
-        expect(+time.getDate()).toBe(1373364772795);
-        expect(spy).toHaveBeenCalled();
-
-        spy.andReturn("2013-07-09T13:12:52.795-07");
-        expect(+time.getDate()).toBe(1373400772795);
-        expect(spy).toHaveBeenCalled();
-
-        spy.andReturn("2012");
         expect(+time.getDate()).toBe(1325376000000);
-        expect(spy).toHaveBeenCalled();
+
+        time.set("datetime", "2013-07-09T13:12:52.795Z");
+        expect(+time.getDate()).toBe(1373375572795);
+ 
+        time.set("datetime", "2013-07-09T13:12:52.795+03");
+        expect(+time.getDate()).toBe(1373364772795);
+
+        time.set("datetime", "2013-07-09T13:12:52.795-07");
+        expect(+time.getDate()).toBe(1373400772795);
     });
 
     it("should throw error if attribute value is invalid", function() {
-        var spy = spyOn(time, "get").andReturn("abc");
+        time.set("datetime", "abc");
         expect(function() { time.getDate(); }).toThrow();
-        expect(spy).toHaveBeenCalled();
     });
 
     it("should allow to set Date object", function() {
@@ -45,7 +39,7 @@ describe("better-prettydate", function() {
         var now = new Date(),
             spy = spyOn(time, "getDate").andReturn(now),
             //timeoutSpy = spyOn(window, setTimeout),
-            setSpy = spyOn(time, "set"),
+            setSpy = spyOn(time, "set").andReturn(time),
             timeoutSpy = spyOn(window, "setTimeout");
 
         time._refreshDate();
