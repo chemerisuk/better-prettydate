@@ -1,6 +1,6 @@
 /**
  * @file better-prettydate.js
- * @version 1.0.0 2013-07-10T21:26:33
+ * @version 1.0.0 2013-07-10T21:27:44
  * @overview Enhances time element to update text in realtime
  * @copyright Maksim Chemerisuk 2013
  * @license MIT
