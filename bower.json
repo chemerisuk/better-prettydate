@@ -1,6 +1,6 @@
 {
     "name": "better-prettydate",
-    "version": "0.9.5",
+    "version": "1.0.0",
     "main": [
         "better-prettydate.js",
         "i18n/better-prettydate.en.js",
@@ -15,6 +15,6 @@
         "better-dom"
     ],
     "dependencies": {
-        "better-dom": "~1.1.0"
+        "better-dom": "~1.2.0"
     }
 }
