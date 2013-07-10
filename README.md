@@ -1,6 +1,6 @@
 better-prettydate [![Build Status](https://api.travis-ci.org/chemerisuk/better-prettydate.png?branch=master)](http://travis-ci.org/chemerisuk/better-prettydate)
 ======================
-> Enhances time element to update in realtime
+> Enhances time element to update text in realtime
 
 Installing
 ----------
@@ -15,6 +15,8 @@ Then append the following html elements on your page:
 ```html
 <html>
 <head>
+    ...
+    <!--[if IE]><script src="bower_components/html5shiv/dist/html5shiv.js"></script><![endif]-->
 </head>
 <body>
     ...

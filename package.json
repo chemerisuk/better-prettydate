@@ -1,6 +1,6 @@
 {
     "name": "better-prettydate",
-    "description": "Enhances time element to update in realtime",
+    "description": "Enhances time element to update text in realtime",
     "version": "0.9.5",
     "author": "Maksim Chemerisuk",
     "license": "MIT",
