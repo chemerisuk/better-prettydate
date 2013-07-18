@@ -1,11 +1,3 @@
-/**
- * @file <%= pkg.name %>.js
- * @version <%= pkg.version %> <%= grunt.template.today("isoDateTime") %>
- * @overview <%= pkg.description %>
- * @copyright <%= pkg.author %> <%= grunt.template.today("yyyy") %>
- * @license <%= pkg.license %>
- * @see <%= pkg.repository.url %>
- */
 (function(DOM, undefined) {
     "use strict";
 
