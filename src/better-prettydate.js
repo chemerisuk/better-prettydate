@@ -20,8 +20,7 @@
 
     DOM.extend("time[datetime]", {
         constructor: function() {
-            // use bind to store context inside of _refreshDate
-            this.bind("_refreshDate")._refreshDate();
+            this._refreshDate();
         },
         getDate: (function() {
             // https://github.com/csnover/js-iso8601/blob/master/iso8601.js
@@ -94,7 +93,11 @@
             // protect from internal inserted content + trigger reflow in IE8
             this.set({ "data-i18n": i18nKey, "data-prettydate": value }).set("");
             // schedule next update
-            setTimeout(this._refreshDate, (dayDiff > 0 ? 86400 : (diff < 3600 ? 60 : 3600)) * 1000);
+            setTimeout((function(el) {
+                return function() {
+                    el._refreshDate();
+                };
+            }(this)), (dayDiff > 0 ? 86400 : (diff < 3600 ? 60 : 3600)) * 1000);
         }
     });
 }(window.DOM));
