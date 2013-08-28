@@ -1,6 +1,6 @@
 /**
  * @file better-dom
- * @version 1.2.0 2013-07-10T21:22:03
+ * @version 1.3.1 2013-08-16T12:15:20
  * @overview Sandbox for living DOM extensions
  * @copyright Maksim Chemerisuk 2013
  * @license MIT
@@ -13,14 +13,7 @@
     // -------
 
     // jshint unused:false
-    var _uniqueId = (function() {
-            var idCounter = 1;
-
-            return function(prefix) {
-                return (prefix || "") + idCounter++;
-            };
-        })(),
-        _defer = function(callback) {
+    var _defer = function(callback) {
             return setTimeout(callback, 0);
         },
         _makeError = function(method, el) {
@@ -162,7 +155,28 @@
 
                 return fragment;
             };
-        })();
+        })(),
+        _requestAnimationFrame = (function() {
+            var lastTime = 0,
+                raf = _foldl(["r", "webkitR", "mozR"], function(result, prefix) {
+                    var propertyName = prefix + "equestAnimationFrame";
+
+                    if (!result) return window[propertyName] && propertyName;
+                }, "");
+
+            return raf || function(callback) {
+                var currTime = new Date().getTime(),
+                    timeToCall = Math.max(0, 16 - (currTime - lastTime));
+
+                lastTime = currTime + timeToCall;
+
+                if (timeToCall) {
+                    setTimeout(callback, timeToCall);
+                } else {
+                    callback(currTime + timeToCall);
+                }
+            };
+        }());
 
     // DOM NODE
     // --------
@@ -179,8 +193,6 @@
             this._node = node;
             this._data = {};
             this._listeners = [];
-
-            node.__dom__ = this;
         }
     }
 
@@ -226,7 +238,7 @@
         var rquickExpr = /^(?:#([\w\-]+)|(\w+)|\.([\w\-]+))$/,
             rsibling = /[\x20\t\r\n\f]*[+~>]/,
             rescape = /'|\\/g,
-            tmpId = _uniqueId("DOM");
+            tmpId = "DOM" + new Date().getTime();
 
         if (!document.getElementsByClassName) {
             // exclude getElementsByClassName from pattern
@@ -236,7 +248,7 @@
         /**
          * Finds element by selector
          * @param  {String} selector css selector
-         * @return {$Element} element or null if nothing was found
+         * @return {$Element} the first matched element
          * @example
          * var domBody = DOM.find("body");
          *
@@ -251,15 +263,15 @@
             }
 
             var node = this._node,
-                quickMatch, m, elem, elements, old, nid, context;
+                quickMatch = rquickExpr.exec(selector),
+                m, elem, elements, old, nid, context;
 
-            if (quickMatch = rquickExpr.exec(selector)) {
+            if (quickMatch) {
                 // Speed-up: "#ID"
                 if (m = quickMatch[1]) {
                     elem = document.getElementById(m);
-                    // Handle the case where IE, Opera, and Webkit return items
-                    // by name instead of ID
-                    if ( elem && elem.parentNode && elem.id === m && (node === document || this.contains(elem)) ) {
+                    // Handle the case where IE, Opera, and Webkit return items by name instead of ID
+                    if ( elem && elem.parentNode && elem.id === m && (this === DOM || node.contains(elem)) ) {
                         elements = [elem];
                     }
                 // Speed-up: "TAG"
@@ -274,8 +286,8 @@
                     elements = elements[0];
                 }
             } else {
-                old = true,
-                nid = tmpId,
+                old = true;
+                nid = tmpId;
                 context = node;
 
                 if (node !== document) {
@@ -309,7 +321,7 @@
         /**
          * Finds all elements by selector
          * @param  {String} selector css selector
-         * @return {$CompositeElement} elements collection
+         * @return {$Element} collection of matched elements
          */
         $Node.prototype.findAll = function(selector) {
             return this.find(selector, true);
@@ -377,93 +389,88 @@
     // CONTAINS
     // --------
 
-    (function() {
-        var containsElement;
+    /**
+     * Check if element is inside of context
+     * @param  {$Element} element element to check
+     * @return {Boolean} true if success
+     * @example
+     * DOM.find("html").contains(DOM.find("body"));
+     * // returns true
+     */
+    $Node.prototype.contains = function(element) {
+        var node = this._node, result;
 
-        if (documentElement.contains) {
-            containsElement = function(parent, child) {
-                return parent.contains(child);
-            };
+        if (element instanceof $Element) {
+            result = element.every(function(element) {
+                return node.contains(element._node);
+            });
         } else {
-            containsElement = function(parent, child) {
-                return !!(parent.compareDocumentPosition(child) & 16);
-            };
+            throw _makeError("contains", this);
         }
-        
-        /**
-         * Check if element is inside of context
-         * @param  {$Element} element element to check
-         * @return {Boolean} true if success
-         * @example
-         * DOM.find("html").contains(DOM.find("body"));
-         * // returns true
-         */
-        $Node.prototype.contains = function(element) {
-            var node = this._node, result;
 
-            if (element.nodeType === 1) {
-                result = containsElement(node, element);
-            } else if (element instanceof $Element) {
-                result = element.every(function(element) {
-                    return containsElement(node, element._node);
-                });
-            } else {
-                throw _makeError("contains", this);
-            }
-
-            return result;
-        };
-    })();
+        return result;
+    };
 
     // DOM EVENTS
     // ----------
 
     (function() {
         var eventHooks = {},
-            rpropexpr = /^([a-z:]+)(?:\(([^)]+)\))?\s?(.*)$/,
-            legacyCustomEventName = "dataavailable",
-            processObjectParam = function(value, name) { this.on(name, value); },
-            createCustomEventWrapper = function(originalHandler, type) {
-                var handler = function() {
-                        if (window.event.srcUrn === type) originalHandler();
-                    };
-
-                handler.type = originalHandler.type;
-                handler._type = legacyCustomEventName;
-                handler.callback = originalHandler.callback;
-
-                return handler;
-            };
+            legacyCustomEventName = "dataavailable";
 
         /**
          * Bind a DOM event to the context
-         * @param  {String}   type event type
+         * @param  {String}   type event type with optional selector
+         * @param  {Array}    [props] event properties to pass to the callback function
          * @param  {Object}   [context] callback context
-         * @param  {Function|String} callback event callback
-         * @param  {Array}    [args] extra arguments
+         * @param  {Function|String} callback event callback/property name
          * @return {$Node}
          * @example
          * // NOTICE: handler don't have e as the first argument
          * input.on("click", function() {...});
-         * // NOTICE: event arguments in event name
-         * input.on("keydown(keyCode,altKey)", function(keyCode, altKey) {...});
+         * // NOTICE: event properties in event name
+         * input.on("keydown", ["which", "altKey"], function(which, altKey) {...});
          */
-        $Node.prototype.on = function(type, context, callback, args) {
-            var eventType = typeof type,
-                hook, handler, selector, expr;
+        $Node.prototype.on = function(type, props, context, callback, /*INTERNAL*/once) {
+            var node = this._node,
+                eventType = typeof type,
+                hook, handler, selector, index;
 
             if (eventType === "string") {
+                index = type.indexOf(" ");
+
+                if (~index) {
+                    selector = type.substr(index + 1);
+                    type = type.substr(0, index);
+                }
+
+                // handle optional props argument
+                if (Object.prototype.toString.call(props) !== "[object Array]") {
+                    once = callback;
+                    callback = context;
+                    context = props;
+                    props = undefined;
+                }
+
+                // handle optional context argument
                 if (typeof context !== "object") {
-                    args = callback;
+                    once = callback;
                     callback = context;
                     context = this;
                 }
 
-                expr = rpropexpr.exec(type);
-                type = expr[1];
-                selector = expr[3];
+                if (once) {
+                    callback = (function(thisPtr, originalCallback) {
+                        return function() {
+                            // remove event listener
+                            thisPtr.off(handler.type, handler.context, callback);
+
+                            return originalCallback.apply(this, arguments);
+                        };
+                    }(this, callback));
+                }
                 
-                handler = EventHandler(expr, context, callback, args, this._node);
+                handler = EventHandler(type, selector, context, callback, props, this);
                 handler.type = selector ? type + " " + selector : type;
                 handler.callback = callback;
                 handler.context = context;
@@ -471,22 +478,38 @@
                 if (hook = eventHooks[type]) hook(handler);
 
                 if (document.addEventListener) {
-                    this._node.addEventListener(handler._type || type, handler, !!handler.capturing);
+                    node.addEventListener(handler._type || type, handler, !!handler.capturing);
                 } else {
-                    // handle custom events for IE8
-                    if (!this.supports("on" + type) || handler.custom) handler = createCustomEventWrapper(handler, type);
+                    // IE8 doesn't support onscroll on document level
+                    if (this === DOM && type === "scroll") node = window;
 
-                    this._node.attachEvent("on" + (handler._type || type), handler);
+                    node.attachEvent("on" + (handler._type || type), handler);
                 }
                 // store event entry
                 this._listeners.push(handler);
             } else if (eventType === "object") {
-                _forOwn(type, processObjectParam, this);
+                _forOwn(type, function(value, name) { this.on(name, value); }, this);
             } else {
                 throw _makeError("on", this);
             }
 
             return this;
+        };
+
+        /**
+         * Bind a DOM event to the context and the callback only fire once before being removed
+         * @param  {String}   type event type with optional selector
+         * @param  {Array}    [props] event properties to pass to the callback function
+         * @param  {Object}   [context] callback context
+         * @param  {Function|String} callback event callback/property name
+         * @return {$Node}
+         */
+        $Node.prototype.once = function() {
+            var args = _slice(arguments);
+
+            args.push(true);
+
+            return $Node.prototype.on.apply(this, args);
         };
 
         /**
@@ -501,7 +524,7 @@
                 throw _makeError("off", this);
             }
 
-            if (typeof context !== "object") {
+            if (arguments.length === 2) {
                 callback = context;
                 context = !callback ? undefined : this;
             }
@@ -515,6 +538,9 @@
                     if (document.removeEventListener) {
                         node.removeEventListener(type, handler, !!handler.capturing);
                     } else {
+                        // IE8 doesn't support onscroll on document level
+                        if (this === DOM && type === "scroll") node = window;
+
                         node.detachEvent("on" + type, handler);
                     }
                     
@@ -526,7 +552,7 @@
         };
 
         /**
-         * Triggers an event of specific type
+         * Triggers an event of specific type and executes it's default action if it exists
          * @param  {String} eventType type of event
          * @param  {Object} [detail] event details
          * @return {$Node}
@@ -561,7 +587,6 @@
                 canContinue = node.dispatchEvent(event);
             } else {
                 event = document.createEventObject();
-
                 // store original event type
                 event.srcUrn = isCustomEvent ? type : undefined;
                 event.detail = detail;
@@ -688,33 +713,27 @@
         // https://github.com/jquery/jquery
         var rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-]+)\])?(?:\.([\w\-]+))?$/,
             ctor =  function(selector) {
-                if (this instanceof SelectorMatcher) {
-                    this.selector = selector;
-
-                    var quick = rquickIs.exec(selector);
-                    // TODO: support attribute value check
-                    if (this.quick = quick) {
-                        //   0  1    2   3          4
-                        // [ _, tag, id, attribute, class ]
-                        if (quick[1]) quick[1] = quick[1].toLowerCase();
-                        if (quick[4]) quick[4] = " " + quick[4] + " ";
-                    }
-                } else {
+                if (!(this instanceof SelectorMatcher)) {
                     return selector ? new SelectorMatcher(selector) : null;
+                }
+
+                this.selector = selector;
+
+                var quick = rquickIs.exec(selector);
+                // TODO: support attribute value check
+                if (this.quick = quick) {
+                    //   0  1    2   3          4
+                    // [ _, tag, id, attribute, class ]
+                    if (quick[1]) quick[1] = quick[1].toLowerCase();
+                    if (quick[4]) quick[4] = " " + quick[4] + " ";
                 }
             },
             matchesProp = _foldl("m oM msM mozM webkitM".split(" "), function(result, prefix) {
                 var propertyName = prefix + "atchesSelector";
 
-                return result || documentElement[propertyName] && propertyName;
+                if (!result) return documentElement[propertyName] && propertyName;
             }, null),
-            matches = (function() {
-                var isEqual = function(val) { return val === this; };
-
-                return function(el, selector) {
-                    return _some(document.querySelectorAll(selector), isEqual, el);
-                };
-            }());
+            isEqual = function(val) { return val === this; };
 
         ctor.prototype = {
             test: function(el) {
@@ -727,12 +746,14 @@
                     );
                 }
 
-                return matchesProp ? el[matchesProp](this.selector) : matches(el, this.selector);
+                if (matchesProp) return el[matchesProp](this.selector);
+
+                return _some(document.querySelectorAll(this.selector), isEqual, el);
             }
         };
 
         return ctor;
-    })();
+    }());
 
     /**
      * Helper type to create an event handler
@@ -740,7 +761,32 @@
      * @constructor
      */
     var EventHandler = (function() {
-        var hooks = {};
+        var hooks = {},
+            debouncedEvents = "scroll mousemove",
+            createCustomEventWrapper = function(originalHandler, type) {
+                var handler = function() {
+                        if (window.event.srcUrn === type) originalHandler();
+                    };
+
+                handler._type = "dataavailable";
+
+                return handler;
+            },
+            createDebouncedEventWrapper = function(originalHandler) {
+                var canProcess = true;
+
+                return function(e) {
+                    if (canProcess) {
+                        canProcess = false;
+
+                        _requestAnimationFrame(function() {
+                            originalHandler(e);
+
+                            canProcess = true;
+                        });
+                    }
+                };
+            };
 
         hooks.currentTarget = function(event, currentTarget) {
             return $Element(currentTarget);
@@ -780,37 +826,37 @@
                     return event.charCode || event.keyCode || undefined;
                 }
             };
+
+            hooks.pageX = function(event) {
+                return event.clientX + documentElement.scrollLeft - documentElement.clientLeft;
+            };
+
+            hooks.pageY = function(event) {
+                return event.clientY + documentElement.scrollTop - documentElement.clientTop;
+            };
         }
 
-        return function(expr, context, callback, extras, currentTarget) {
-            var matcher = SelectorMatcher(expr[3]),
+        return function(type, selector, context, callback, extras, currentTarget) {
+            var matcher = SelectorMatcher(selector),
                 isCallbackProp = typeof callback === "string",
                 defaultEventHandler = function(e) {
-                    if (EventHandler.veto !== expr[1]) {
+                    if (EventHandler.veto !== type) {
                         var event = e || window.event,
                             fn = isCallbackProp ? context[callback] : callback,
-                            result, args;
-
-                        // populate event handler arguments
-                        if (expr[2]) {
-                            args = _map(expr[2].split(","), function(name) {
-                                if (name === "type") return expr[1];
-
+                            args = _map(extras, function(name) {
                                 var hook = hooks[name];
 
-                                return hook ? hook(event, currentTarget) : event[name];
-                            });
-                            
-                            if (extras) args.push.apply(args, extras);
-                        } else {
-                            args = extras ? extras.slice(0) : [];
-                        }
+                                return hook ? hook(event, currentTarget._node) : (name === "type" ? type : event[name]);
+                            }),
+                            result;
+
+                        if (!fn) return;
 
                         // make performant call
                         if (args.length) {
-                            if (fn) result = fn.apply(context, args);
+                            result = fn.apply(context, args);
                         } else {
-                            result = isCallbackProp ? fn && context[callback]() : fn.call(context);
+                            result = isCallbackProp ? context[callback]() : fn.call(context);
                         }
 
                         // prevent default if handler returns false
@@ -822,15 +868,26 @@
                             }
                         }
                     }
-                };
+                },
+                result;
 
-            return !matcher ? defaultEventHandler : function(e) {
-                var node = window.event ? window.event.srcElement : e.target;
+            result = !matcher ? defaultEventHandler : function(e) {
+                var node = window.event ? window.event.srcElement : e.target,
+                    root = currentTarget._node;
 
-                for (; node && node !== currentTarget; node = node.parentNode) {
+                for (; node && node !== root; node = node.parentNode) {
                     if (matcher.test(node)) return defaultEventHandler(e);
                 }
             };
+
+            if (~debouncedEvents.indexOf(type)) {
+                result = createDebouncedEventWrapper(result);
+            } else if (!document.addEventListener && (!currentTarget.supports("on" + type) || type === "submit")) {
+                // handle custom events for IE8
+                result = createCustomEventWrapper(result, type);
+            }
+
+            return result;
         };
     }());
 
@@ -839,7 +896,9 @@
     // -----------
 
     /**
-     * Prototype for a DOM element
+     * Array-like object that represents a DOM element. For single element methods behaves
+     * according to their description. If an element is null or it's a composite element
+     * then getters return an undefined value
      * @name $Element
      * @param element native element
      * @extends $Node
@@ -855,7 +914,9 @@
 
         $Node.call(this, element);
 
-        if (element) Array.prototype.push.call(this, this);
+        if (element) {
+            Array.prototype.push.call(this, element.__dom__ = this);
+        }
     }
 
     $Element.prototype = new $Node();
@@ -968,7 +1029,7 @@
     (function() {
         function makeManipulationMethod(methodName, fasterMethodName, strategy) {
             // always use _parseFragment because of HTML5 and NoScope bugs in IE
-            if (document.attachEvent) fasterMethodName = false;
+            if (document.attachEvent && !window.CSSKeyframesRule) fasterMethodName = false;
 
             return function(value) {
                 var valueType = typeof value,
@@ -984,10 +1045,8 @@
                     if (value[0] !== "<") value = DOM.parseTemplate(value);
 
                     relatedNode = fasterMethodName ? null : _parseFragment(value);
-                } else if (value && (value.nodeType === 1 || value.nodeType === 11)) {
-                    relatedNode = value;
                 } else if (value instanceof $Element) {
-                    value.each(function(el) { this[methodName](el._node); }, this);
+                    value.each(function(el) { strategy(node, el._node); });
 
                     return this;
                 } else if (value !== undefined) {
@@ -1006,7 +1065,7 @@
 
         /**
          * Insert html string or native element after the current
-         * @param {String|Element|$Element} content HTML string or Element
+         * @param {String|$Element} content HTML string or $Element
          * @return {$Element}
          * @function
          */
@@ -1016,7 +1075,7 @@
 
         /**
          * Insert html string or native element before the current
-         * @param {String|Element|$Element} content HTML string or Element
+         * @param {String|$Element} content HTML string or $Element
          * @return {$Element}
          * @function
          */
@@ -1026,7 +1085,7 @@
 
         /**
          * Prepend html string or native element to the current
-         * @param {String|Element|$Element} content HTML string or Element
+         * @param {String|$Element} content HTML string or $Element
          * @return {$Element}
          * @function
          */
@@ -1036,7 +1095,7 @@
 
         /**
          * Append html string or native element to the current
-         * @param {String|Element|$Element} content HTML string or Element
+         * @param {String|$Element} content HTML string or $Element
          * @return {$Element}
          * @function
          */
@@ -1046,7 +1105,7 @@
 
         /**
          * Replace current element with html string or native element
-         * @param {String|Element|$Element} content HTML string or Element
+         * @param {String|$Element} content HTML string or $Element
          * @return {$Element}
          * @function
          */
@@ -1083,12 +1142,11 @@
      * @return {{top: Number, left: Number, right: Number, bottom: Number}} offset object
      */
     $Element.prototype.offset = function() {
-        var bodyElement = document.body,
-            boundingRect = this._node.getBoundingClientRect(),
-            clientTop = documentElement.clientTop || bodyElement.clientTop || 0,
-            clientLeft = documentElement.clientLeft || bodyElement.clientLeft || 0,
-            scrollTop = window.pageYOffset || documentElement.scrollTop || bodyElement.scrollTop,
-            scrollLeft = window.pageXOffset || documentElement.scrollLeft || bodyElement.scrollLeft;
+        var boundingRect = this._node.getBoundingClientRect(),
+            clientTop = documentElement.clientTop,
+            clientLeft = documentElement.clientLeft,
+            scrollTop = window.pageYOffset || documentElement.scrollTop,
+            scrollLeft = window.pageXOffset || documentElement.scrollLeft;
 
         return {
             top: boundingRect.top + scrollTop - clientTop,
@@ -1436,7 +1494,7 @@
         /**
          * Find all next sibling elements filtered by optional selector
          * @param {String} [selector] css selector
-         * @return {$CompositeElement} matched elements
+         * @return {$Element} collection of matched elements
          * @function
          */
         $Element.prototype.nextAll = makeTraversingMethod("nextSibling", true);
@@ -1444,7 +1502,7 @@
         /**
          * Find all previous sibling elements filtered by optional selector
          * @param {String} [selector] css selector
-         * @return {$CompositeElement} matched elements
+         * @return {$Element} collection of matched elements
          * @function
          */
         $Element.prototype.prevAll = makeTraversingMethod("previousSibling", true);
@@ -1474,33 +1532,11 @@
         /**
          * Fetch children elements filtered by optional selector
          * @param  {String} [selector] css selector
-         * @return {$CompositeElement} matched elements
+         * @return {$Element} collection of matched elements
          * @function
          */
         $Element.prototype.children = makeChildTraversingMethod(true);
     })();
-
-    /**
-     * Prepend extra arguments to the method with specified name
-     * @param  {String}    name  name of method to bind arguments with
-     * @param  {...Object} args  extra arguments to prepend to the method
-     * @return {$Element}
-     */
-    $Element.prototype.bind = function(name) {
-        var self = this,
-            args = _slice(arguments, 1),
-            method = this[name];
-
-        if (typeof method !== "function" || method in $Node.prototype || method in $Element.prototype) {
-            throw _makeError("bind", this);
-        }
-
-        this[name] = function() {
-            return method.apply(self, args.concat(_slice(arguments)));
-        };
-
-        return this;
-    };
 
     /**
      * Show element
@@ -1552,12 +1588,9 @@
     // -----------------
 
     /**
-     * Array-like collection of elements with the same interface as $Element. Setters do
-     * processing for each element, getters return undefined value.
-     * @name $CompositeElement
-     * @extends $Element
-     * @constructor
+     * Used to represent collection of DOM elements
      * @private
+     * @constructor
      */
     function $CompositeElement(elements) {
         Array.prototype.push.apply(this, _map(elements, $Element));
@@ -1631,10 +1664,10 @@
          * @memberOf $Element.prototype
          * @param  {Function} callback   callback function
          * @param  {Object}   [thisArg]  callback context
-         * @return {$Element} new $CompositeElement of elements that passed the callback check
+         * @return {Array} new array with elements where callback returned true
          */
         filter: function(callback, thisArg) {
-            return new $CompositeElement(_filter(this, callback, thisArg));
+            return _filter(this, callback, thisArg);
         },
 
         /**
@@ -1705,7 +1738,7 @@
      */
     var DOM = new $Node(document);
 
-    DOM.version = "1.2.0";
+    DOM.version = "1.3.1";
 
     // WATCH CALLBACK
     // --------------
@@ -1719,31 +1752,29 @@
      * @function
      */
     DOM.watch = (function() {
-        var watchers, computed, cssPrefix, scripts, behaviorUrl;
+        var animId = 19968, // use Chinese characters for animation names starting from 4E00
+            watchers, cssPrefix, scripts, behaviorUrl;
 
         if (window.CSSKeyframesRule || !document.attachEvent) {
             // Inspired by trick discovered by Daniel Buchner:
             // https://github.com/csuwldcat/SelectorListener
-            computed = _getComputedStyle(documentElement);
-            cssPrefix = window.CSSKeyframesRule ? "" : (_slice(computed).join().match(/-(moz|webkit)-/) || (computed.OLink === "" && ["-o-"]))[0];
+            cssPrefix = CSSRule.KEYFRAMES_RULE ? "" : "-webkit-";
             watchers = {};
 
-            _forEach(["animationstart", "oAnimationStart", "webkitAnimationStart"], function(name) {
-                document.addEventListener(name, function(e) {
-                    var entry = watchers[e.animationName],
-                        node = e.target;
+            document.addEventListener(cssPrefix ? "webkitAnimationStart" : "animationstart", function(e) {
+                var entry = watchers[e.animationName],
+                    node = e.target;
 
-                    if (entry) {
-                        // MUST cancelBubbling first otherwise may have extra calls in firefox
-                        if (entry.once) node.addEventListener(name, entry.once, false);
+                if (entry) {
+                    // MUST cancelBubbling first because of extra calls in firefox
+                    if (entry.once) node.addEventListener(e.type, entry.once, false);
 
-                        entry.callback($Element(node));
-                    }
-                }, false);
-            });
+                    entry.callback($Element(node));
+                }
+            }, false);
 
             return function(selector, callback, once) {
-                var animationName = _uniqueId("DOM"),
+                var animationName = String.fromCharCode(animId++),
                     animations = [animationName];
 
                 _forOwn(watchers, function(entry, key) {
@@ -1792,9 +1823,8 @@
                 var behaviorExists = _some(watchers, function(x) { return x.matcher.selector === selector; });
                 
                 if (behaviorExists) {
-                    // call the callback manually for each matched element
+                    // do safe call of the callback for each matched element
                     // because the behaviour is already attached to selector
-                    // also execute the callback safely
                     DOM.findAll(selector).each(function(el) {
                         _defer(function() { callback(el); });
                     });
@@ -1826,7 +1856,7 @@
         /**
          * Create a $Element instance
          * @memberOf DOM
-         * @param  {String|Element} value native element or element tag name
+         * @param  {Element|String} value element/tag name or emmet expression
          * @return {$Element} element
          */
         DOM.create = function(value) {
@@ -1836,23 +1866,20 @@
                 } else {
                     if (value[0] !== "<") value = DOM.parseTemplate(value);
 
-                    value = _parseFragment(value);
+                    var sandbox = document.createElement("div");
+
+                    sandbox.innerHTML = value;
+
+                    if (sandbox.childNodes.length === 1 && sandbox.firstChild.nodeType === 1) {
+                        value = sandbox.removeChild(sandbox.firstChild);
+                    } else {
+                        value = sandbox; // result will be wrapped with the div
+                    }
                 }
             }
 
-            var nodeType = value.nodeType, div;
-
-            if (nodeType === 11) {
-                if (value.childNodes.length === 1) {
-                    value = value.firstChild;
-                } else {
-                    // wrap result with div
-                    div = document.createElement("div");
-                    div.appendChild(value);
-                    value = div;
-                }
-            } else if (nodeType !== 1) {
-                this.error("create");
+            if (value.nodeType !== 1) {
+                throw _makeError("create", this);
             }
 
             return $Element(value);
@@ -1973,49 +2000,41 @@
                 return function(expr, fmt) {
                     return (fmt + index).slice(-fmt.length).split("$").join("0");
                 };
-            };
-
-        // helper class
-        function HtmlBuilder(node, n) {
-            if (n) {
-                var parsed = reIndex.exec(node) || [],
-                    step = parsed[2] ? -1 : 1,
-                    i = parsed[3] ? +parsed[3] : 1;
-
-                if (step < 0) i += n - 1;
-
-                for (; n--; i += step) {
-                    this.push(node.replace(reIndexg, formatIndex(i)));
-                }
-            } else {
-                this.push(HtmlBuilder.parse(node));
-            }
-        }
-
-        HtmlBuilder.parse = function(term) {
-            var result = "<" + term + ">";
-
-            if (emptyElements.indexOf(" " + term + " ") < 0) {
-                result += "</" + term + ">";
-            }
-
-            return result;
-        };
-
-        HtmlBuilder.prototype = {
-            push: Array.prototype.push,
-            inject: function(term, first) {
-                for (var i = 0, n = this.length, index, el; i < n; ++i) {
-                    el = this[i];
-                    index = first ? el.indexOf(">") : el.lastIndexOf("<");
-                    // inject term into the html string
-                    this[i] = el.substr(0, index) + term + el.substr(index);
-                }
             },
-            toString: function() {
-                return Array.prototype.join.call(this, "");
-            }
-        };
+            injectTerm = function(term, first) {
+                return function(el) {
+                    var index = first ? el.indexOf(">") : el.lastIndexOf("<");
+                    // inject term into the html string
+                    return el.substr(0, index) + term + el.substr(index);
+                };
+            },
+            makeTerm = function(term) {
+                var result = "<" + term + ">";
+
+                if (emptyElements.indexOf(" " + term + " ") < 0) {
+                    result += "</" + term + ">";
+                }
+
+                return [result];
+            },
+            makeTerms = function(term, n) {
+                var parsed = reIndex.exec(term) || [],
+                    step = parsed[2] ? -1 : 1,
+                    index = parsed[3] ? +parsed[3] : 1,
+                    result = new Array(n),
+                    i = 0;
+
+                if (step < 0) index += n - 1;
+
+                for (; i < n; ++i, index += step) {
+                    result[i] = term.replace(reIndexg, formatIndex(index));
+                }
+
+                return result;
+            },
+            toString = function(term) {
+                return typeof term === "string" ? term : term.join("");
+            };
 
         /**
          * Parse emmet-like template to HTML string
@@ -2096,47 +2115,52 @@
                     term = stack.shift();
                     node = stack.shift() || "?";
 
-                    if (typeof node === "string") node = new HtmlBuilder(node);
+                    if (typeof node === "string") node = makeTerm(node);
 
                     switch(str) {
                     case ".":
-                        node.inject(" class=\"" + term + "\"", true);
+                        term = injectTerm(" class=\"" + term + "\"", true);
                         break;
 
                     case "#":
-                        node.inject(" id=\"" + term + "\"", true);
+                        term = injectTerm(" id=\"" + term + "\"", true);
                         break;
 
                     case ":":
-                        node.inject(" type=\"" + term + "\"", true);
+                        term = injectTerm(" type=\"" + term + "\"", true);
                         break;
 
                     case "[":
-                        node.inject(" " + term.replace(reAttr, normalizeAttrs), true);
+                        term = injectTerm(" " + term.replace(reAttr, normalizeAttrs), true);
                         break;
 
                     case "{":
-                        node.inject(term);
+                        term = injectTerm(term);
                         break;
 
                     case "*":
-                        node = new HtmlBuilder(node.toString(), parseInt(term, 10));
+                        node = makeTerms(toString(node), parseInt(term, 10));
                         break;
 
                     default:
-                        term = typeof term === "string" ? HtmlBuilder.parse(term) : term.toString();
+                        if (typeof term === "string") term = makeTerm(term)[0];
 
-                        node[str === ">" ? "inject" : "push"](term);
-                        break;
+                        term = toString(term);
+
+                        if (str === ">") {
+                            term = injectTerm(term);
+                        } else {
+                            node.push(term);
+                        }
                     }
 
-                    str = node;
+                    str = typeof term === "function" ? _map(node, term) : node;
                 }
 
                 stack.unshift(str);
             }
 
-            return stack[0].toString().replace(reEmpty, "");
+            return toString(stack[0]).replace(reEmpty, "");
         };
     })();
 
@@ -2175,7 +2199,7 @@
                 });
             }
         };
-
+        
         if (!DOM.supports("hidden", "a")) {
             DOM.importStyles("[hidden]", "display:none");
         }

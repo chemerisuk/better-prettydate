@@ -59,22 +59,7 @@ module.exports = function(grunt) {
         },
         karma: {
             unit: {
-                configFile: "test/lib/karma.conf"
-            },
-            speed: {
-                configFile: "test/lib/karma.conf",
-                browsers: ["<%= pkg.speed.browser %>"],
-                options: {
-                    files: [
-                        "node_modules/benchmark/benchmark.js",
-                        "test/lib/benchmine/benchmine-env.js",
-                        "test/lib/karma-benchmine-adapter.js",
-                        "test/lib/benchmine/benchmine-report-karma.js",
-                        "bower_components/jquery/jquery.js",
-                        "build/*.js",
-                        "test/speed/<%= pkg.speed.task %>.suite.js"
-                    ]
-                }
+                configFile: "test/lib/karma.conf.js"
             }
         },
         shell: {
@@ -95,7 +80,7 @@ module.exports = function(grunt) {
                 command: [
                     // get a list of all files in stage and delete everything except for targets, node_modules, cache, temp, and logs
                     // rm does not delete root level hidden files
-                    "ls | grep -v ^jsdoc$ | grep -v ^node_modules$ | xargs rm -r ",
+                    "ls | grep -v ^jsdoc$ | grep -v ^node_modules$ | grep -v ^bower_components$ | xargs rm -r ",
 
                     // copy from the stage folder to the current (root) folder
                     "cp -r jsdoc/* . && rm -r jsdoc",
@@ -200,7 +185,7 @@ module.exports = function(grunt) {
                     "Node.supports", "Node.find", "Node.data", "Node.contains", "Node.events",
                     "SelectorMatcher", "EventHandler", "Element.classes", "Element.clone",
                     "Element.manipulation", "Element.matches", "Element.offset", "Element.get",
-                    "Element.set", "Element.styles", "Element.traversing", "Element.bind",
+                    "Element.set", "Element.styles", "Element.traversing",
                     "Element.visibility", "Element.collection", "CompositeElement", "DOM.watch",
                     "DOM.create", "DOM.extend", "DOM.parsetemplate", "DOM.importstyles", "DOM.ready",
                     "DOM.importstrings", "DOM.title"
@@ -260,13 +245,6 @@ module.exports = function(grunt) {
         "copy:readme",
         "jsdoc"
     ]);
-
-    grunt.registerTask("speed", "Run speed suite on a specified browser", function(task, browser) {
-        pkg.speed = {};
-        pkg.speed.task = task;
-        pkg.speed.browser = browser || "Chrome";
-        grunt.task.run(["requirejs:compile", "karma:speed"]);
-    });
 
     grunt.registerTask("publish", "Publish a new version routine", function(version) {
         grunt.config.set("pkg.version", version);
