@@ -2,6 +2,8 @@ better-prettydate [![Build Status](https://api.travis-ci.org/chemerisuk/better-p
 ======================
 > Enhances time element to update text in realtime
 
+Demo: http://chemerisuk.github.io/better-prettydate/
+
 Installing
 ----------
 Use [bower](http://bower.io/) to download this extension with all required dependencies.
@@ -26,7 +28,3 @@ Then append the following html elements on your page:
 </body>
 </html>
 ```
-
-Demo
-----
-http://chemerisuk.github.io/better-prettydate/

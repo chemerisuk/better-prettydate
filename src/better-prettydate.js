@@ -1,11 +1,3 @@
-/**
- * @file <%= pkg.name %>.js
- * @version <%= pkg.version %> <%= grunt.template.today("isoDateTime") %>
- * @overview <%= pkg.description %>
- * @copyright <%= pkg.author %> <%= grunt.template.today("yyyy") %>
- * @license <%= pkg.license %>
- * @see <%= pkg.repository.url %>
- */
 (function(DOM, undefined) {
     "use strict";
 
@@ -28,8 +20,7 @@
 
     DOM.extend("time[datetime]", {
         constructor: function() {
-            // use bind to store context inside of _refreshDate
-            this.bind("_refreshDate")._refreshDate();
+            this._refreshDate();
         },
         getDate: (function() {
             // https://github.com/csnover/js-iso8601/blob/master/iso8601.js
@@ -44,7 +35,7 @@
 
                 if (!m) throw "Invalid ISO String";
                 
-                for (i = 0; (k = dateUrcReqIndx[i]); i += 1) {
+                for (i = 0; (k = dateUrcReqIndx[i]); ++i) {
                     m[k] = +m[k] || 0;
                 }
                 // Undefined days and months are allowed
@@ -54,7 +45,7 @@
                 if (m[8] !== "Z" && m[9] !== undefined) {
                     minutesOffset = m[10] * 60 + m[11];
 
-                    if (m[9] === "+") minutesOffset = 0 - minutesOffset;
+                    if (m[9] === "+") minutesOffset *= -1;
                 }
 
                 return Date.UTC(m[1], m[2] - 1, m[3], m[4], m[5] + minutesOffset, m[6], m[7]);
@@ -89,7 +80,7 @@
                 else if (diff < 120) i18nKey = I18N_MINUTE;
                 else if (diff < 3600) { i18nKey = I18N_MINUTES; value = Math.floor(diff / 60); }
                 else if (diff < 7200) { i18nKey = I18N_HOUR; }
-                else if (diff < 86400) { i18nKey = I18N_HOURS; value = Math.floor(diff / 3600); }
+                else { i18nKey = I18N_HOURS; value = Math.floor(diff / 3600); }
             } else if (dayDiff === 1) { i18nKey = I18N_YESTERDAY; }
             else if (dayDiff < 7) { i18nKey = I18N_DAYS; value = dayDiff; }
             else if (dayDiff < 8) { i18nKey = I18N_WEEK; }
@@ -97,12 +88,16 @@
             else if (dayDiff < 30) { i18nKey = I18N_WEEKS; value = Math.ceil(dayDiff / 7); }
             else if (dayDiff < 32) { i18nKey = I18N_MONTH; }
             else if (dayDiff < 363) { i18nKey = I18N_MONTHS; value = Math.ceil(dayDiff / 31); }
-            else if (dayDiff <= 380) { i18nKey = I18N_YEAR; }
             else if (dayDiff > 380) { i18nKey = I18N_YEARS; value = Math.ceil(dayDiff / 365); }
+            else { i18nKey = I18N_YEAR; }
             // protect from internal inserted content + trigger reflow in IE8
             this.set({ "data-i18n": i18nKey, "data-prettydate": value }).set("");
             // schedule next update
-            setTimeout(this._refreshDate, (dayDiff > 0 ? 86400 : (diff < 3600 ? 60 : 3600)) * 1000);
+            setTimeout((function(el) {
+                return function() {
+                    el._refreshDate();
+                };
+            }(this)), (dayDiff > 0 ? 86400 : (diff < 3600 ? 60 : 3600)) * 1000);
         }
     });
 }(window.DOM));
