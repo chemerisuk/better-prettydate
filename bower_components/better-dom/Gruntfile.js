@@ -3,44 +3,20 @@ module.exports = function(grunt) {
 
     var pkg = grunt.file.readJSON("package.json"),
         gruntDeps = function(name) {
-            return !name.indexOf("grunt-") && name !== "grunt-template-jasmine-istanbul";
+            return !name.indexOf("grunt-");
         };
 
     grunt.initConfig({
         pkg: pkg,
 
-        jasmine: {
-            options: {
-                vendor: [
-                    "test/lib/jasmine-dom/jasmine-dom-fixtures.js",
-                    "test/lib/jasmine-dom/jasmine-dom-matchers.js",
-                    "node_modules/lodash/lodash.js"
-                ],
-                specs: "test/spec/*.spec.js",
-                keepRunner: true
-            },
-            unit: {
-                src: ["build/*.js"]
-            },
-            coverage: {
-                src: ["build/*.js"],
-                options: {
-                    template: require("grunt-template-jasmine-istanbul"),
-                    templateOptions: {
-                        coverage: "coverage/coverage.json",
-                        report: "coverage"
-                    }
-                }
-            }
-        },
         watch: {
             jasmine: {
                 files: ["test/spec/*.js"],
-                tasks: ["jasmine:coverage"]
+                tasks: ["karma:coverage:run"]
             },
             build: {
                 files: ["src/*.js"],
-                tasks: ["requirejs", "jasmine:coverage"]
+                tasks: ["requirejs", "karma:coverage:run"]
             }
         },
         jshint: {
@@ -53,13 +29,27 @@ module.exports = function(grunt) {
             dist: {
                 src: ["src/*.js", "jsdoc/README.md"],
                 options: {
-                    destination: "jsdoc"
+                    destination: "jsdoc",
+                    template: "node_modules/ink-docstrap/template",
+                    configure: "extra/jsdoc.conf.json"
                 }
             }
         },
         karma: {
-            unit: {
+            options: {
                 configFile: "test/lib/karma.conf.js"
+            },
+            all: {
+                browsers: ["PhantomJS", "Chrome", "Opera", "Safari", "Firefox"],
+                singleRun: true
+            },
+            coverage: {
+                preprocessors: { "build/*.js": "coverage" },
+                reporters: ["coverage", "progress"],
+                background: true
+            },
+            unit: {
+                singleRun: true
             }
         },
         shell: {
@@ -139,8 +129,10 @@ module.exports = function(grunt) {
                 options: {
                     processContent: function(content) {
                         return content
-                            // remove build status indicator
-                            .replace(/\[!\[Build Status\][^\n]*/, "")
+                            // remove the first line
+                            .replace(/^# .+/, "&nbsp;")
+                            // remove docs link
+                            .replace("[API DOCUMENTATION](http://chemerisuk.github.io/better-dom/)", "")
                             // remove source code
                             .replace(/```[^`]+```/g, "");
                     }
@@ -186,9 +178,9 @@ module.exports = function(grunt) {
                     "SelectorMatcher", "EventHandler", "Element.classes", "Element.clone",
                     "Element.manipulation", "Element.matches", "Element.offset", "Element.get",
                     "Element.set", "Element.styles", "Element.traversing",
-                    "Element.visibility", "Element.collection", "CompositeElement", "DOM.watch",
-                    "DOM.create", "DOM.extend", "DOM.parsetemplate", "DOM.importstyles", "DOM.ready",
-                    "DOM.importstrings", "DOM.title"
+                    "Element.visibility", "Element.collection", "CompositeElement", "NullElement",
+                    "DOM.watch", "DOM.create", "DOM.extend", "DOM.parsetemplate", "DOM.importstyles",
+                    "DOM.ready", "DOM.importscripts", "DOM.importstrings", "DOM.title"
                 ],
                 onBuildWrite: function(id, path, contents) {
                     return contents.replace(/^define\(.*?\{\s*"use strict";[\r\n]*([.\s\S]+)\}\);\s*$/m, "$1");
@@ -214,15 +206,17 @@ module.exports = function(grunt) {
     Object.keys(pkg.devDependencies).filter(gruntDeps).forEach(grunt.loadNpmTasks);
 
     grunt.registerTask("dev", [
-        "test",
+        "requirejs:compile",
+        "jshint",
         "connect",
+        "karma:coverage",
         "watch"
     ]);
 
     grunt.registerTask("test", [
         "requirejs:compile",
         "jshint",
-        "jasmine:unit"
+        "karma:unit"
     ]);
 
     grunt.registerTask("default", [
@@ -266,7 +260,7 @@ module.exports = function(grunt) {
 
         grunt.task.run([
             "shell:checkVersionTag",
-            "karma:unit",
+            "karma:all",
             "updateFileVersion:package.json",
             "updateFileVersion:bower.json",
             "requirejs:compile",
