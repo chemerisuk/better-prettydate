@@ -4,7 +4,7 @@ describe("better-prettydate", function() {
     var time;
 
     beforeEach(function() {
-        time = DOM.mock("time[datetime=2012]");
+        time = DOM.mock("time.prettydate[datetime=2012]");
     });
 
     it("should allow to read Date from the attribute value", function() {
@@ -12,7 +12,7 @@ describe("better-prettydate", function() {
 
         time.set("datetime", "2013-07-09T13:12:52.795Z");
         expect(+time.getDate()).toBe(1373375572795);
- 
+
         time.set("datetime", "2013-07-09T13:12:52.795+03");
         expect(+time.getDate()).toBe(1373364772795);
 
@@ -49,7 +49,7 @@ describe("better-prettydate", function() {
         now.setMinutes(now.getMinutes() - 1);
         time._refreshDate();
         checkAttrs(timeoutSpy, 60, setSpy, "prettydate-minute", 1);
-        
+
         now.setMinutes(now.getMinutes() - 23);
         time._refreshDate();
         checkAttrs(timeoutSpy, 60, setSpy, "prettydate-minutes", 24);

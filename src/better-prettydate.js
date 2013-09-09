@@ -18,7 +18,7 @@
         I18N_YEAR = "prettydate-year",
         I18N_YEARS = "prettydate-years";
 
-    DOM.extend("time[datetime]", {
+    DOM.extend("time.prettydate", {
         constructor: function() {
             this._refreshDate();
         },
@@ -34,7 +34,7 @@
                     m = rES5ts.exec(this.get("datetime"));
 
                 if (!m) throw "Invalid ISO String";
-                
+
                 for (i = 0; (k = dateUrcReqIndx[i]); ++i) {
                     m[k] = +m[k] || 0;
                 }
@@ -52,7 +52,7 @@
             };
         }()),
         setDate: (function() {
-            var pad = function(value) { return ("00" + value).slice(-2); };
+            var pad = function(value) { return ("00" + value).slice(-2) };
 
             return function(value) {
                 var result = value.getUTCFullYear() +
@@ -72,10 +72,11 @@
         _refreshDate: function() {
             var diff = (new Date() - this.getDate()) / 1000,
                 dayDiff = Math.floor(diff / 86400),
+                timeout = (dayDiff > 0 ? 86400 : (diff < 3600 ? 60 : 3600)) * 1000,
                 value = 1,
                 i18nKey;
 
-            if (dayDiff === 0) {
+            if (dayDiff <= 0) {
                 if (diff < 60) i18nKey = I18N_NOW;
                 else if (diff < 120) i18nKey = I18N_MINUTE;
                 else if (diff < 3600) { i18nKey = I18N_MINUTES; value = Math.floor(diff / 60); }
@@ -94,10 +95,12 @@
             this.set({ "data-i18n": i18nKey, "data-prettydate": value }).set("");
             // schedule next update
             setTimeout((function(el) {
-                return function() {
-                    el._refreshDate();
-                };
-            }(this)), (dayDiff > 0 ? 86400 : (diff < 3600 ? 60 : 3600)) * 1000);
+                return function() { el._refreshDate() };
+            }(this)), timeout);
         }
     });
+
+    if (typeof define === "function" && define.amd) {
+        define("better-prettydate", ["better-dom"], function() {});
+    }
 }(window.DOM));
