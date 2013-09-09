@@ -1,6 +1,6 @@
 {
     "name": "better-prettydate",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "main": [
         "better-prettydate.js",
         "i18n/better-prettydate.en.js",
