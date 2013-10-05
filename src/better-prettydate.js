@@ -4,20 +4,6 @@
     // Inspired by jquery-prettydate:
     // http://bassistance.de/jquery-plugins/jquery-plugin-prettydate/
 
-    var I18N_NOW = "prettydate-now",
-        I18N_MINUTE = "prettydate-minute",
-        I18N_MINUTES = "prettydate-minutes",
-        I18N_HOUR = "prettydate-hour",
-        I18N_HOURS = "prettydate-hours",
-        I18N_YESTERDAY = "prettydate-yesterday",
-        I18N_DAYS = "prettydate-days",
-        I18N_WEEK = "prettydate-week",
-        I18N_WEEKS = "prettydate-weeks",
-        I18N_MONTH = "prettydate-month",
-        I18N_MONTHS = "prettydate-months",
-        I18N_YEAR = "prettydate-year",
-        I18N_YEARS = "prettydate-years";
-
     DOM.extend("time.prettydate", {
         constructor: function() {
             this._refreshDate();
@@ -72,35 +58,32 @@
         _refreshDate: function() {
             var diff = (new Date() - this.getDate()) / 1000,
                 dayDiff = Math.floor(diff / 86400),
-                timeout = (dayDiff > 0 ? 86400 : (diff < 3600 ? 60 : 3600)) * 1000,
                 value = 1,
                 i18nKey;
 
             if (dayDiff <= 0) {
-                if (diff < 60) i18nKey = I18N_NOW;
-                else if (diff < 120) i18nKey = I18N_MINUTE;
-                else if (diff < 3600) { i18nKey = I18N_MINUTES; value = Math.floor(diff / 60); }
-                else if (diff < 7200) { i18nKey = I18N_HOUR; }
-                else { i18nKey = I18N_HOURS; value = Math.floor(diff / 3600); }
-            } else if (dayDiff === 1) { i18nKey = I18N_YESTERDAY; }
-            else if (dayDiff < 7) { i18nKey = I18N_DAYS; value = dayDiff; }
-            else if (dayDiff < 8) { i18nKey = I18N_WEEK; }
-            else if (dayDiff < 14) { i18nKey = I18N_DAYS; value = dayDiff; }
-            else if (dayDiff < 30) { i18nKey = I18N_WEEKS; value = Math.ceil(dayDiff / 7); }
-            else if (dayDiff < 32) { i18nKey = I18N_MONTH; }
-            else if (dayDiff < 363) { i18nKey = I18N_MONTHS; value = Math.ceil(dayDiff / 31); }
-            else if (dayDiff > 380) { i18nKey = I18N_YEARS; value = Math.ceil(dayDiff / 365); }
-            else { i18nKey = I18N_YEAR; }
+                if (diff < 60) i18nKey = "prettydate-now";
+                else if (diff < 120) i18nKey = "prettydate-minute";
+                else if (diff < 3600) { i18nKey = "prettydate-minutes"; value = Math.floor(diff / 60); }
+                else if (diff < 7200) { i18nKey = "prettydate-hour"; }
+                else { i18nKey = "prettydate-hours"; value = Math.floor(diff / 3600); }
+            } else if (dayDiff === 1) { i18nKey = "prettydate-yesterday"; }
+            else if (dayDiff < 7) { i18nKey = "prettydate-days"; value = dayDiff; }
+            else if (dayDiff < 8) { i18nKey = "prettydate-week"; }
+            else if (dayDiff < 14) { i18nKey = "prettydate-days"; value = dayDiff; }
+            else if (dayDiff < 30) { i18nKey = "prettydate-weeks"; value = Math.ceil(dayDiff / 7); }
+            else if (dayDiff < 32) { i18nKey = "prettydate-month"; }
+            else if (dayDiff < 363) { i18nKey = "prettydate-months"; value = Math.ceil(dayDiff / 31); }
+            else if (dayDiff > 380) { i18nKey = "prettydate-years"; value = Math.ceil(dayDiff / 365); }
+            else { i18nKey = "prettydate-year"; }
             // protect from internal inserted content + trigger reflow in IE8
             this.set({ "data-i18n": i18nKey, "data-prettydate": value }).set("");
-            // schedule next update
-            setTimeout((function(el) {
-                return function() { el._refreshDate() };
-            }(this)), timeout);
+            // schedule next update if it's less than 1 day ago
+            if (dayDiff === 0) {
+                this.each(function(el) {
+                    setTimeout(function() { el._refreshDate() }, (diff < 3600 ? 60 : 3600) * 1000);
+                });
+            }
         }
     });
-
-    if (typeof define === "function" && define.amd) {
-        define("better-prettydate", ["better-dom"], function() {});
-    }
 }(window.DOM));

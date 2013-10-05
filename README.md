@@ -8,7 +8,7 @@ Installing
 ----------
 Use [bower](http://bower.io/) to download this extension with all required dependencies.
 
-    bower install better-prettydate
+    bower install better-prettydate --save
 
 This will clone the latest version of the __better-prettydate__ into the `bower_components` directory at the root of your project.
 
@@ -18,12 +18,15 @@ Then append the following html elements on your page:
 <html>
 <head>
     ...
-    <!--[if IE]><script src="bower_components/html5shiv/dist/html5shiv.js"></script><![endif]-->
+    <!--[if IE]>
+        <link href="bower_components/better-dom/dist/better-dom.htc" rel="better-dom-htc" />
+        <script src="bower_components/html5shiv/dist/html5shiv.js"></script>
+    <![endif]-->
 </head>
 <body>
     ...
-    <script src="bower_components/better-dom/better-dom.js" data-htc="bower_components/better-dom/better-dom.htc"></script>
-    <script src="bower_components/better-prettydate/better-prettydate.js"></script>
+    <script src="bower_components/better-dom/dist/better-dom.js"></script>
+    <script src="bower_components/better-prettydate/dist/better-prettydate.js"></script>
     <script src="bower_components/better-prettydate/i18n/better-prettydate.en.js"></script>
 </body>
 </html>
