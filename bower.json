@@ -1,8 +1,8 @@
 {
     "name": "better-prettydate",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "main": [
-        "better-prettydate.js",
+        "dist/better-prettydate.js",
         "i18n/better-prettydate.en.js",
         "i18n/better-prettydate.ru.js"
     ],
@@ -15,6 +15,6 @@
         "better-dom"
     ],
     "dependencies": {
-        "better-dom": "~1.4.0"
+        "better-dom": "~1.5.1"
     }
 }
