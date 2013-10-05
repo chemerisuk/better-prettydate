@@ -31,7 +31,8 @@ module.exports = function(grunt) {
                 options: {
                     destination: "jsdoc",
                     template: "node_modules/ink-docstrap/template",
-                    configure: "extra/jsdoc.conf.json"
+                    configure: "extra/jsdoc.conf.json",
+                    tutorials: "extra/tutorials"
                 }
             }
         },
@@ -115,14 +116,8 @@ module.exports = function(grunt) {
         copy: {
             dist: {
                 files: {
-                    "dist/<%= pkg.name %>-<%= pkg.version %>.js": ["<%= pkg.name %>.js"],
-                    "dist/<%= pkg.name %>-<%= pkg.version %>.htc": ["<%= pkg.name %>.htc"]
-                }
-            },
-            publish: {
-                files: {
-                    "<%= pkg.name %>.js": ["build/<%= pkg.name %>.js"],
-                    "<%= pkg.name %>.htc": ["extra/<%= pkg.name %>.htc"]
+                    "dist/<%= pkg.name %>.js": ["build/<%= pkg.name %>.js"],
+                    "dist/<%= pkg.name %>.htc": ["extra/<%= pkg.name %>.htc"]
                 }
             },
             readme: {
@@ -177,9 +172,9 @@ module.exports = function(grunt) {
                     "Node.supports", "Node.find", "Node.data", "Node.contains", "Node.events",
                     "SelectorMatcher", "EventHandler", "Element.classes", "Element.clone",
                     "Element.manipulation", "Element.matches", "Element.offset", "Element.get",
-                    "Element.set", "Element.styles", "Element.traversing",
-                    "Element.visibility", "Element.collection", "CompositeElement", "NullElement",
-                    "DOM.watch", "DOM.create", "DOM.extend", "DOM.parsetemplate", "DOM.importstyles",
+                    "Element.set", "Element.style", "Element.traversing",
+                    "Element.visibility", "Element.collection", "CompositeElement",
+                    "DOM.create", "DOM.extend", "DOM.template", "DOM.importstyles", "DOM.watch",
                     "DOM.ready", "DOM.importscripts", "DOM.importstrings", "DOM.title"
                 ],
                 onBuildWrite: function(id, path, contents) {
@@ -219,21 +214,6 @@ module.exports = function(grunt) {
         "karma:unit"
     ]);
 
-    grunt.registerTask("default", [
-        "clean",
-        "copy:dist",
-        "uglify"
-    ]);
-
-    grunt.registerTask("dist-test", [
-        "requirejs:compile",
-        "copy:publish",
-        "copy:dist",
-        "uglify",
-        "shell:rollbackPublished",
-        "clean:dist"
-    ]);
-
     grunt.registerTask("docs", [
         "clean:jsdoc",
         "copy:readme",
@@ -264,7 +244,7 @@ module.exports = function(grunt) {
             "updateFileVersion:package.json",
             "updateFileVersion:bower.json",
             "requirejs:compile",
-            "copy:publish",
+            "copy:dist",
             "docs",
             "shell:checkoutDocs",
             "bumpDocsBuild",
