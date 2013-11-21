@@ -27,7 +27,6 @@ Then append the following html elements on your page:
     ...
     <script src="bower_components/better-dom/dist/better-dom.js"></script>
     <script src="bower_components/better-prettydate/dist/better-prettydate.js"></script>
-    <script src="bower_components/better-prettydate/i18n/better-prettydate.en.js"></script>
 </body>
 </html>
 ```

@@ -62,22 +62,22 @@
                 i18nKey;
 
             if (dayDiff <= 0) {
-                if (diff < 60) i18nKey = "prettydate-now";
-                else if (diff < 120) i18nKey = "prettydate-minute";
-                else if (diff < 3600) { i18nKey = "prettydate-minutes"; value = Math.floor(diff / 60); }
-                else if (diff < 7200) { i18nKey = "prettydate-hour"; }
-                else { i18nKey = "prettydate-hours"; value = Math.floor(diff / 3600); }
-            } else if (dayDiff === 1) { i18nKey = "prettydate-yesterday"; }
-            else if (dayDiff < 7) { i18nKey = "prettydate-days"; value = dayDiff; }
-            else if (dayDiff < 8) { i18nKey = "prettydate-week"; }
-            else if (dayDiff < 14) { i18nKey = "prettydate-days"; value = dayDiff; }
-            else if (dayDiff < 30) { i18nKey = "prettydate-weeks"; value = Math.ceil(dayDiff / 7); }
-            else if (dayDiff < 32) { i18nKey = "prettydate-month"; }
-            else if (dayDiff < 363) { i18nKey = "prettydate-months"; value = Math.ceil(dayDiff / 31); }
-            else if (dayDiff > 380) { i18nKey = "prettydate-years"; value = Math.ceil(dayDiff / 365); }
-            else { i18nKey = "prettydate-year"; }
+                if (diff < 60) i18nKey = "just now";
+                else if (diff < 120) i18nKey = "a minute ago";
+                else if (diff < 3600) { i18nKey = "${prettydate} minutes ago"; value = Math.floor(diff / 60); }
+                else if (diff < 7200) { i18nKey = "an hour ago"; }
+                else { i18nKey = "${prettydate} hours ago"; value = Math.floor(diff / 3600); }
+            } else if (dayDiff === 1) { i18nKey = "yesterday"; }
+            else if (dayDiff < 7) { i18nKey = "${prettydate} days ago"; value = dayDiff; }
+            else if (dayDiff < 8) { i18nKey = "a week ago"; }
+            else if (dayDiff < 14) { i18nKey = "${prettydate} days ago"; value = dayDiff; }
+            else if (dayDiff < 30) { i18nKey = "${prettydate} weeks ago"; value = Math.ceil(dayDiff / 7); }
+            else if (dayDiff < 32) { i18nKey = "a month ago"; }
+            else if (dayDiff < 363) { i18nKey = "${prettydate} months ago"; value = Math.ceil(dayDiff / 31); }
+            else if (dayDiff > 380) { i18nKey = "${prettydate} years ago"; value = Math.ceil(dayDiff / 365); }
+            else { i18nKey = "an year ago"; }
             // protect from internal inserted content + trigger reflow in IE8
-            this.set({ "data-i18n": i18nKey, "data-prettydate": value }).set("");
+            this.i18n(i18nKey, {prettydate: value});
             // schedule next update if it's less than 1 day ago
             if (dayDiff === 0) {
                 this.each(function(el) {
