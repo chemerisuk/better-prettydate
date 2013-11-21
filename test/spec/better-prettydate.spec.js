@@ -39,68 +39,68 @@ describe("better-prettydate", function() {
         var now = new Date(),
             spy = spyOn(time, "getDate").andReturn(now),
             //timeoutSpy = spyOn(window, setTimeout),
-            setSpy = spyOn(time, "set").andReturn(time),
+            setSpy = spyOn(time, "i18n").andReturn(time),
             timeoutSpy = spyOn(window, "setTimeout");
 
         time._refreshDate();
         expect(spy).toHaveBeenCalled();
-        checkAttrs(timeoutSpy, 60, setSpy, "prettydate-now", 1);
+        checkAttrs(timeoutSpy, 60, setSpy, "just now", 1);
 
         now.setMinutes(now.getMinutes() - 1);
         time._refreshDate();
-        checkAttrs(timeoutSpy, 60, setSpy, "prettydate-minute", 1);
+        checkAttrs(timeoutSpy, 60, setSpy, "a minute ago", 1);
 
         now.setMinutes(now.getMinutes() - 23);
         time._refreshDate();
-        checkAttrs(timeoutSpy, 60, setSpy, "prettydate-minutes", 24);
+        checkAttrs(timeoutSpy, 60, setSpy, "${prettydate} minutes ago", 24);
 
         now.setMinutes(now.getMinutes() - 40);
         time._refreshDate();
-        checkAttrs(timeoutSpy, 3600, setSpy, "prettydate-hour", 1);
+        checkAttrs(timeoutSpy, 3600, setSpy, "an hour ago", 1);
 
         now.setHours(now.getHours() - 2);
         time._refreshDate();
-        checkAttrs(timeoutSpy, 3600, setSpy, "prettydate-hours", 3);
+        checkAttrs(timeoutSpy, 3600, setSpy, "${prettydate} hours ago", 3);
 
-        // now.setDate(now.getDate() - 1);
-        // time._refreshDate();
-        // checkAttrs(timeoutSpy, 86400, setSpy, "prettydate-yesterday", 1);
+        now.setDate(now.getDate() - 1);
+        time._refreshDate();
+        checkAttrs(null, 86400, setSpy, "yesterday", 1);
 
-        // now.setDate(now.getDate() - 4);
-        // time._refreshDate();
-        // checkAttrs(timeoutSpy, 86400, setSpy, "prettydate-days", 5);
+        now.setDate(now.getDate() - 4);
+        time._refreshDate();
+        checkAttrs(null, 86400, setSpy, "${prettydate} days ago", 5);
 
-        // now.setDate(now.getDate() - 2);
-        // time._refreshDate();
-        // checkAttrs(timeoutSpy, 86400, setSpy, "prettydate-week", 1);
+        now.setDate(now.getDate() - 2);
+        time._refreshDate();
+        checkAttrs(null, 86400, setSpy, "a week ago", 1);
 
-        // now.setDate(now.getDate() - 3);
-        // time._refreshDate();
-        // checkAttrs(timeoutSpy, 86400, setSpy, "prettydate-days", 10);
+        now.setDate(now.getDate() - 3);
+        time._refreshDate();
+        checkAttrs(null, 86400, setSpy, "${prettydate} days ago", 10);
 
-        // now.setDate(now.getDate() - 10);
-        // time._refreshDate();
-        // checkAttrs(timeoutSpy, 86400, setSpy, "prettydate-weeks", 3);
+        now.setDate(now.getDate() - 10);
+        time._refreshDate();
+        checkAttrs(null, 86400, setSpy, "${prettydate} weeks ago", 3);
 
-        // now.setDate(now.getDate() - 10);
-        // time._refreshDate();
-        // checkAttrs(timeoutSpy, 86400, setSpy, "prettydate-month", 1);
+        now.setDate(now.getDate() - 10);
+        time._refreshDate();
+        checkAttrs(null, 86400, setSpy, "a month ago", 1);
 
-        // now.setMonth(now.getMonth() - 1);
-        // time._refreshDate();
-        // checkAttrs(timeoutSpy, 86400, setSpy, "prettydate-months", 2);
+        now.setMonth(now.getMonth() - 1);
+        time._refreshDate();
+        checkAttrs(null, 86400, setSpy, "${prettydate} months ago", 2);
 
-        // now.setMonth(now.getMonth() - 10);
-        // time._refreshDate();
-        // checkAttrs(timeoutSpy, 86400, setSpy, "prettydate-year", 1);
+        now.setMonth(now.getMonth() - 10);
+        time._refreshDate();
+        checkAttrs(null, 86400, setSpy, "an year ago", 1);
 
-        // now.setFullYear(now.getFullYear() - 10);
-        // time._refreshDate();
-        // checkAttrs(timeoutSpy, 86400, setSpy, "prettydate-years", 12);
+        now.setFullYear(now.getFullYear() - 10);
+        time._refreshDate();
+        checkAttrs(null, 86400, setSpy, "${prettydate} years ago", 12);
     });
 
     function checkAttrs(timeoutSpy, timeout, spy, i18n, value) {
-        expect(timeoutSpy.mostRecentCall.args[1]).toBe(timeout * 1000);
-        expect(spy).toHaveBeenCalledWith({"data-i18n": i18n, "data-prettydate": value});
+        expect(spy).toHaveBeenCalledWith(i18n, {prettydate: value});
+        if (timeoutSpy) expect(timeoutSpy.mostRecentCall.args[1]).toBe(timeout * 1000);
     }
 });
