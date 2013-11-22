@@ -1,15 +1,15 @@
-DOM.importStrings({
-    "prettydate-now": "только что",
-    "prettydate-minute": "минуту назад",
-    "prettydate-minutes": "около {prettydate} минут назад",
-    "prettydate-hour": "час назад",
-    "prettydate-hours": "около {prettydate} часов назад",
-    "prettydate-yesterday": "вчера",
-    "prettydate-days": "около {prettydate} дней назад",
-    "prettydate-week": "неделю назад",
-    "prettydate-weeks": "около {prettydate} недель назад",
-    "prettydate-month": "месяц назад",
-    "prettydate-months": "около {prettydate} месяцев назад",
-    "prettydate-year": "год назад",
-    "prettydate-years": "{prettydate} лет назад"
-}, "ru");
+DOM.importStrings("ru", {
+    "just now": "только что",
+    "a minute ago": "минуту назад",
+    "${prettydate} minutes ago": "около ${prettydate} минут назад",
+    "an hour ago": "час назад",
+    "${prettydate} hours ago": "около ${prettydate} часов назад",
+    "yesterday": "вчера",
+    "${prettydate} days ago": "около ${prettydate} дней назад",
+    "a week ago": "неделю назад",
+    "${prettydate} weeks ago": "около ${prettydate} недель назад",
+    "a month ago": "месяц назад",
+    "${prettydate} months ago": "около ${prettydate} месяцев назад",
+    "an year ago": "год назад",
+    "${prettydate} years ago": "${prettydate} лет назад"
+});

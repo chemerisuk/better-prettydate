@@ -1,24 +1,23 @@
 {
-    "name": "better-prettydate",
-    "description": "Enhances time element to update text in realtime",
-    "version": "1.1.0",
-    "author": "Maksim Chemerisuk",
-    "license": "MIT",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/chemerisuk/better-prettydate"
-    },
-    "scripts": {
-        "test": "grunt test"
-    },
-    "devDependencies": {
-        "grunt": "0.4.1",
-        "grunt-contrib-jshint": "0.5.4",
-        "grunt-contrib-watch": "0.4.3",
-        "grunt-contrib-clean": "0.4.1",
-        "grunt-contrib-copy": "0.4.1",
-        "grunt-shell": "0.2.2",
-        "grunt-karma": "0.7.1",
-        "karma-coverage": "0.1.0"
-    }
+  "name": "better-prettydate",
+  "description": "Enhances time element to update text in realtime",
+  "version": "1.2.0-rc.1",
+  "author": "Maksim Chemerisuk",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chemerisuk/better-prettydate"
+  },
+  "scripts": {
+    "test": "grunt test"
+  },
+  "devDependencies": {
+    "grunt": "0.4.1",
+    "grunt-contrib-jshint": "0.5.4",
+    "grunt-contrib-watch": "0.4.3",
+    "grunt-karma": "0.7.1",
+    "karma-coverage": "0.1.0",
+    "grunt-github-publish": "~0.1.1",
+    "grunt-shell": "~0.6.0"
+  }
 }

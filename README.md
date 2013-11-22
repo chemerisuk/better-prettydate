@@ -1,8 +1,8 @@
 better-prettydate [![Build Status](https://api.travis-ci.org/chemerisuk/better-prettydate.png?branch=master)](http://travis-ci.org/chemerisuk/better-prettydate)
 ======================
-> Enhances time element to update text in realtime
+> Enhances `.prettydate` element to update text in realtime
 
-Demo: http://chemerisuk.github.io/better-prettydate/
+[VIEW DEMO](http://chemerisuk.github.io/better-prettydate/)
 
 Installing
 ----------
@@ -19,7 +19,7 @@ Then append the following html elements on your page:
 <head>
     ...
     <!--[if IE]>
-        <link href="bower_components/better-dom/dist/better-dom.htc" rel="better-dom-htc" />
+        <link href="bower_components/better-dom/dist/better-dom.htc" rel="htc" />
         <script src="bower_components/html5shiv/dist/html5shiv.js"></script>
     <![endif]-->
 </head>
@@ -27,7 +27,6 @@ Then append the following html elements on your page:
     ...
     <script src="bower_components/better-dom/dist/better-dom.js"></script>
     <script src="bower_components/better-prettydate/dist/better-prettydate.js"></script>
-    <script src="bower_components/better-prettydate/i18n/better-prettydate.en.js"></script>
 </body>
 </html>
 ```
