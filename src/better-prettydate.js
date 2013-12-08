@@ -13,7 +13,7 @@
             this.data("ts", ts).refreshPrettyDate();
         },
         refreshPrettyDate: function() {
-            var diff = (+new Date() - this.data("ts")) / 1000,
+            var diff = (new Date().getTime() - this.data("ts")) / 1000,
                 dayDiff = Math.floor(diff / 86400),
                 value = 1,
                 i18nKey;

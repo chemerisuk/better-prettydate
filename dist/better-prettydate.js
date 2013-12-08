@@ -1,6 +1,6 @@
 /**
  * @file src/better-prettydate.js
- * @version 1.2.0-rc.1 2013-11-23T00:21:37
+ * @version 1.2.0 2013-12-08T03:49:51
  * @overview Enhances time element to update text in realtime
  * @copyright Maksim Chemerisuk 2013
  * @license MIT
@@ -21,7 +21,7 @@
             this.data("ts", ts).refreshPrettyDate();
         },
         refreshPrettyDate: function() {
-            var diff = (+new Date() - this.data("ts")) / 1000,
+            var diff = (new Date().getTime() - this.data("ts")) / 1000,
                 dayDiff = Math.floor(diff / 86400),
                 value = 1,
                 i18nKey;
