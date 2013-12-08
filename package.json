@@ -1,7 +1,7 @@
 {
   "name": "better-prettydate",
   "description": "Enhances time element to update text in realtime",
-  "version": "1.2.0-rc.1",
+  "version": "1.2.0",
   "author": "Maksim Chemerisuk",
   "license": "MIT",
   "repository": {
