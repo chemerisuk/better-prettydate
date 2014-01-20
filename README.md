@@ -6,7 +6,7 @@
 ## Installing
 Use [bower](http://bower.io/) to download this extension with all required dependencies.
 
-    bower install better-prettydate --save
+    bower install better-prettydate
 
 This will clone the latest version of the __better-prettydate__ into the `bower_components` directory at the root of your project.
 

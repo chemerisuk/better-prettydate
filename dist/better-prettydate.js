@@ -1,8 +1,8 @@
 /**
  * @file src/better-prettydate.js
- * @version 1.2.0 2013-12-08T03:49:51
+ * @version 1.3.0 2014-01-21T01:57:45
  * @overview Enhances time element to update text in realtime
- * @copyright Maksim Chemerisuk 2013
+ * @copyright Maksim Chemerisuk 2014
  * @license MIT
  * @see https://github.com/chemerisuk/better-prettydate
  */
@@ -14,14 +14,17 @@
 
     DOM.extend(".prettydate", {
         constructor: function() {
-            var ts = Date.parse(this.get());
+            var value = this.get("datetime") || this.get(),
+                ts = Date.parse(value);
 
-            if (!ts) throw "Can't parse date string";
+            if (!ts) throw "Can't parse a date string '" + value + "'";
 
-            this.data("ts", ts).refreshPrettyDate();
+            this
+                .data("ts", ts)
+                .doRefreshText(this.doRefreshText);
         },
-        refreshPrettyDate: function() {
-            var diff = (new Date().getTime() - this.data("ts")) / 1000,
+        doRefreshText: function(refresher) {
+            var diff = (Date.now() - this.data("ts")) / 1000,
                 dayDiff = Math.floor(diff / 86400),
                 value = 1,
                 i18nKey;
@@ -44,11 +47,7 @@
 
             this.i18n(i18nKey, {prettydate: value});
             // schedule next update if the delta is less than 1 day ago
-            if (dayDiff === 0) {
-                this.each(function(el) {
-                    setTimeout(function() { el.refreshPrettyDate() }, (diff < 3600 ? 60 : 3600) * 1000);
-                });
-            }
+            if (!dayDiff) setTimeout(refresher.bind(this, refresher), (diff < 3600 ? 60 : 3600) * 1000);
         }
     });
 }(window.DOM));
