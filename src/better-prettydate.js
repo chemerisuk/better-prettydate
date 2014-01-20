@@ -6,11 +6,14 @@
 
     DOM.extend(".prettydate", {
         constructor: function() {
-            var ts = Date.parse(this.get());
+            var value = this.get("datetime") || this.get(),
+                ts = Date.parse(value);
 
-            if (!ts) throw "Can't parse date string";
+            if (!ts) throw "Can't parse a date string '" + value + "'";
 
-            this.data("ts", ts).doRefreshText(this.doRefreshText.bind(this));
+            this
+                .data("ts", ts)
+                .doRefreshText(this.doRefreshText);
         },
         doRefreshText: function(refresher) {
             var diff = (Date.now() - this.data("ts")) / 1000,
@@ -36,7 +39,7 @@
 
             this.i18n(i18nKey, {prettydate: value});
             // schedule next update if the delta is less than 1 day ago
-            if (!dayDiff) setTimeout(refresher, (diff < 3600 ? 60 : 3600) * 1000);
+            if (!dayDiff) setTimeout(refresher.bind(this, refresher), (diff < 3600 ? 60 : 3600) * 1000);
         }
     });
 }(window.DOM));
