@@ -10,10 +10,10 @@
 
             if (!ts) throw "Can't parse date string";
 
-            this.data("ts", ts).refreshPrettyDate();
+            this.data("ts", ts).doRefreshText(this.doRefreshText.bind(this));
         },
-        refreshPrettyDate: function() {
-            var diff = (new Date().getTime() - this.data("ts")) / 1000,
+        doRefreshText: function(refresher) {
+            var diff = (Date.now() - this.data("ts")) / 1000,
                 dayDiff = Math.floor(diff / 86400),
                 value = 1,
                 i18nKey;
@@ -36,11 +36,7 @@
 
             this.i18n(i18nKey, {prettydate: value});
             // schedule next update if the delta is less than 1 day ago
-            if (dayDiff === 0) {
-                this.each(function(el) {
-                    setTimeout(function() { el.refreshPrettyDate() }, (diff < 3600 ? 60 : 3600) * 1000);
-                });
-            }
+            if (!dayDiff) setTimeout(refresher, (diff < 3600 ? 60 : 3600) * 1000);
         }
     });
 }(window.DOM));

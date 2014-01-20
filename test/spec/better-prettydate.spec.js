@@ -40,59 +40,59 @@ describe("better-prettydate", function() {
             setSpy = spyOn(time, "i18n").andReturn(time),
             timeoutSpy = spyOn(window, "setTimeout");
 
-        time.data("ts", now.getTime()).refreshPrettyDate();
+        time.data("ts", now.getTime()).doRefreshText();
         checkAttrs(timeoutSpy, 60, setSpy, "just now", 1);
 
         now.setMinutes(now.getMinutes() - 1);
-        time.data("ts", now.getTime()).refreshPrettyDate();
+        time.data("ts", now.getTime()).doRefreshText();
         checkAttrs(timeoutSpy, 60, setSpy, "a minute ago", 1);
 
         now.setMinutes(now.getMinutes() - 23);
-        time.data("ts", now.getTime()).refreshPrettyDate();
+        time.data("ts", now.getTime()).doRefreshText();
         checkAttrs(timeoutSpy, 60, setSpy, "${prettydate} minutes ago", 24);
 
         now.setMinutes(now.getMinutes() - 40);
-        time.data("ts", now.getTime()).refreshPrettyDate();
+        time.data("ts", now.getTime()).doRefreshText();
         checkAttrs(timeoutSpy, 3600, setSpy, "an hour ago", 1);
 
         now.setHours(now.getHours() - 2);
-        time.data("ts", now.getTime()).refreshPrettyDate();
+        time.data("ts", now.getTime()).doRefreshText();
         checkAttrs(timeoutSpy, 3600, setSpy, "${prettydate} hours ago", 3);
 
         now.setDate(now.getDate() - 1);
-        time.data("ts", now.getTime()).refreshPrettyDate();
+        time.data("ts", now.getTime()).doRefreshText();
         checkAttrs(null, 86400, setSpy, "yesterday", 1);
 
         now.setDate(now.getDate() - 4);
-        time.data("ts", now.getTime()).refreshPrettyDate();
+        time.data("ts", now.getTime()).doRefreshText();
         checkAttrs(null, 86400, setSpy, "${prettydate} days ago", 5);
 
         now.setDate(now.getDate() - 2);
-        time.data("ts", now.getTime()).refreshPrettyDate();
+        time.data("ts", now.getTime()).doRefreshText();
         checkAttrs(null, 86400, setSpy, "a week ago", 1);
 
         now.setDate(now.getDate() - 3);
-        time.data("ts", now.getTime()).refreshPrettyDate();
+        time.data("ts", now.getTime()).doRefreshText();
         checkAttrs(null, 86400, setSpy, "${prettydate} days ago", 10);
 
         now.setDate(now.getDate() - 10);
-        time.data("ts", now.getTime()).refreshPrettyDate();
+        time.data("ts", now.getTime()).doRefreshText();
         checkAttrs(null, 86400, setSpy, "${prettydate} weeks ago", 3);
 
         now.setDate(now.getDate() - 10);
-        time.data("ts", now.getTime()).refreshPrettyDate();
+        time.data("ts", now.getTime()).doRefreshText();
         checkAttrs(null, 86400, setSpy, "a month ago", 1);
 
         now.setMonth(now.getMonth() - 1);
-        time.data("ts", now.getTime()).refreshPrettyDate();
+        time.data("ts", now.getTime()).doRefreshText();
         checkAttrs(null, 86400, setSpy, "${prettydate} months ago", 2);
 
         now.setMonth(now.getMonth() - 10);
-        time.data("ts", now.getTime()).refreshPrettyDate();
+        time.data("ts", now.getTime()).doRefreshText();
         checkAttrs(null, 86400, setSpy, "an year ago", 1);
 
         now.setFullYear(now.getFullYear() - 10);
-        time.data("ts", now.getTime()).refreshPrettyDate();
+        time.data("ts", now.getTime()).doRefreshText();
         checkAttrs(null, 86400, setSpy, "${prettydate} years ago", 12);
     });
 
