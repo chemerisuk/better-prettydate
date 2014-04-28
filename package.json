@@ -15,7 +15,7 @@
     "grunt-karma": "0.8.2",
     "karma": "0.12.0",
     "karma-jasmine": "^0.2",
-    "karma-coverage": "^0.1",
+    "karma-coverage": "^0.2",
     "karma-phantomjs-launcher": "^0.1",
     "grunt-github-publish": "~0.1.5",
     "grunt-shell": "~0.6.0",

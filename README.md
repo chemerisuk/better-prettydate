@@ -40,8 +40,10 @@ Then append the following html elements on your page:
 
 #### Mobile
 * iOS Safari 6+
-* Android 2.3+
 * Chrome for Android
+* Android 2.3+
+
+In order to support Android 2.3 you have to include a `Function.prototype.bind` polyfill before the script.
 
 [travis-url]: http://travis-ci.org/chemerisuk/better-prettydate
 [travis-image]: https://api.travis-ci.org/chemerisuk/better-prettydate.png?branch=master

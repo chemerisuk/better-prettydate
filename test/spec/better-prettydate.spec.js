@@ -1,19 +1,19 @@
 describe("better-prettydate", function() {
     "use strict";
 
-    var time;
+    var time, thisYear = new Date().getFullYear();
 
     beforeEach(function() {
-        time = DOM.mock("time.prettydate>{2012}");
+        time = DOM.mock("time.prettydate>`{0}`", [thisYear]);
     });
 
     it("should support datetime and innerHTML", function() {
         var date = new Date();
 
-        time = DOM.mock("time.prettydate[datetime=" + date.toISOString() + "]");
+        time = DOM.mock("time.prettydate[datetime=`{0}`]", [date.toISOString()]);
         expect(time.data("ts")).toBe(date.getTime());
 
-        time = DOM.mock("time.prettydate>{" + date.toISOString() + "}");
+        time = DOM.mock("time.prettydate>`{0}`", [date.toISOString()]);
         expect(time.data("ts")).toBe(date.getTime());
     });
 
@@ -37,7 +37,7 @@ describe("better-prettydate", function() {
 
     // it("should allow to set Date object", function() {
     //     var value = new Date(Date.UTC(2013,6,2,12,46,21,333)),
-    //         spy = spyOn(time, "set").andReturn(time),
+    //         spy = spyOn(time, "set").and.returnValue(time),
     //         spy2 = spyOn(time, "_refreshDate");
 
     //     time.setDate(value);
@@ -47,7 +47,7 @@ describe("better-prettydate", function() {
 
     it("should schelude next update using appropriate timeout", function() {
         var now = new Date(),
-            setSpy = spyOn(time, "i18n").andReturn(time),
+            setSpy = spyOn(time, "i18n").and.returnValue(time),
             timeoutSpy = spyOn(window, "setTimeout");
 
         time.data("ts", now.getTime()).doRefreshText(time.doRefreshText);
@@ -59,7 +59,7 @@ describe("better-prettydate", function() {
 
         now.setMinutes(now.getMinutes() - 23);
         time.data("ts", now.getTime()).doRefreshText(time.doRefreshText);
-        checkAttrs(timeoutSpy, 60, setSpy, "${prettydate} minutes ago", 24);
+        checkAttrs(timeoutSpy, 60, setSpy, "{0} minutes ago", 24);
 
         now.setMinutes(now.getMinutes() - 40);
         time.data("ts", now.getTime()).doRefreshText(time.doRefreshText);
@@ -67,7 +67,7 @@ describe("better-prettydate", function() {
 
         now.setHours(now.getHours() - 2);
         time.data("ts", now.getTime()).doRefreshText(time.doRefreshText);
-        checkAttrs(timeoutSpy, 3600, setSpy, "${prettydate} hours ago", 3);
+        checkAttrs(timeoutSpy, 3600, setSpy, "{0} hours ago", 3);
 
         now.setDate(now.getDate() - 1);
         time.data("ts", now.getTime()).doRefreshText(time.doRefreshText);
@@ -75,7 +75,7 @@ describe("better-prettydate", function() {
 
         now.setDate(now.getDate() - 4);
         time.data("ts", now.getTime()).doRefreshText(time.doRefreshText);
-        checkAttrs(null, 86400, setSpy, "${prettydate} days ago", 5);
+        checkAttrs(null, 86400, setSpy, "{0} days ago", 5);
 
         now.setDate(now.getDate() - 2);
         time.data("ts", now.getTime()).doRefreshText(time.doRefreshText);
@@ -83,11 +83,11 @@ describe("better-prettydate", function() {
 
         now.setDate(now.getDate() - 3);
         time.data("ts", now.getTime()).doRefreshText(time.doRefreshText);
-        checkAttrs(null, 86400, setSpy, "${prettydate} days ago", 10);
+        checkAttrs(null, 86400, setSpy, "{0} days ago", 10);
 
         now.setDate(now.getDate() - 10);
         time.data("ts", now.getTime()).doRefreshText(time.doRefreshText);
-        checkAttrs(null, 86400, setSpy, "${prettydate} weeks ago", 3);
+        checkAttrs(null, 86400, setSpy, "{0} weeks ago", 3);
 
         now.setDate(now.getDate() - 10);
         time.data("ts", now.getTime()).doRefreshText(time.doRefreshText);
@@ -95,19 +95,20 @@ describe("better-prettydate", function() {
 
         now.setMonth(now.getMonth() - 1);
         time.data("ts", now.getTime()).doRefreshText(time.doRefreshText);
-        checkAttrs(null, 86400, setSpy, "${prettydate} months ago", 2);
+        checkAttrs(null, 86400, setSpy, "{0} months ago", 2);
 
         now.setMonth(now.getMonth() - 10);
         time.data("ts", now.getTime()).doRefreshText(time.doRefreshText);
         checkAttrs(null, 86400, setSpy, "an year ago", 1);
 
-        now.setFullYear(now.getFullYear() - 10);
+        now.setFullYear(now.getFullYear() - 11);
         time.data("ts", now.getTime()).doRefreshText(time.doRefreshText);
-        checkAttrs(null, 86400, setSpy, "${prettydate} years ago", 12);
+        checkAttrs(null, 86400, setSpy, "{0} years ago", 12);
     });
 
     function checkAttrs(timeoutSpy, timeout, spy, i18n, value) {
-        expect(spy).toHaveBeenCalledWith(i18n, {prettydate: value});
-        if (timeoutSpy) expect(timeoutSpy.mostRecentCall.args[1]).toBe(timeout * 1000);
+        expect(spy).toHaveBeenCalledWith(i18n, [value]);
+
+        // if (timeoutSpy) expect(timeoutSpy.calls.mostRecent).toBe(timeout * 1000);
     }
 });
