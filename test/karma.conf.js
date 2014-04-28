@@ -3,9 +3,9 @@ module.exports = function(config) {
 
     config.set({
         basePath: "..",
-        plugins: ["karma-jasmine", "karma-phantomjs-launcher", "karma-coverage"],
         frameworks: ["jasmine"],
         browsers: ["PhantomJS"],
+        preprocessors: { "src/better-prettydate.js": "coverage" },
         files: [
             "bower_components/better-dom/dist/better-dom-legacy.js",
             "bower_components/better-dom/dist/better-dom.js",
