@@ -7,8 +7,10 @@
     DOM.extend(".prettydate", {
         constructor: function() {
             var value = this.get("datetime") || this.get(),
-                refresher = this.doRefreshText.bind(this, this.doRefreshText),
-                ts = Date.parse(value);
+                ts = Date.parse(value),
+                refresher = (function(el, refresh) {
+                    return function() { refresh.call(el, refresher) };
+                }(this, this.doRefreshText));
 
             if (!ts) throw "Can't parse a date string '" + value + "'";
 
@@ -40,7 +42,7 @@
 
             this.i18n(i18nKey, [value]);
             // schedule next update if the delta is less than 1 day ago
-            if (!dayDiff) setTimeout(refresher, (diff < 3600 ? 60 : 3600) * 1000);
+            if (dayDiff < 1) setTimeout(refresher, (diff < 3600 ? 60 : 3600) * 1000);
         }
     });
 }(window.DOM));

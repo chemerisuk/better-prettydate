@@ -1,7 +1,7 @@
 # better-prettydate [![Build Status][travis-image]][travis-url] [![Coverage Status][coveralls-image]][coveralls-url]
 > Enhances `.prettydate` element to update text in realtime
 
-Elements like "an hour ago", "X minutes ago" became to be a standard solution for some UI tasks. This project aims to solve adding support for this kind of extension by enhancing `.prettydate` elements in markup.
+Strings like "an hour ago", "X minutes ago" etc. became to be a standard solution for some UI elements. This project aims to solve adding support for such kind of extension by enhancing elements with the `prettydate` class in HTML markup.
 
 [VIEW DEMO](http://chemerisuk.github.io/better-prettydate/)
 
@@ -40,10 +40,8 @@ Then append the following html elements on your page:
 
 #### Mobile
 * iOS Safari 6+
-* Chrome for Android
 * Android 2.3+
-
-In order to support Android 2.3 you have to include a `Function.prototype.bind` polyfill before the script.
+* Chrome for Android
 
 [travis-url]: http://travis-ci.org/chemerisuk/better-prettydate
 [travis-image]: https://api.travis-ci.org/chemerisuk/better-prettydate.png?branch=master
